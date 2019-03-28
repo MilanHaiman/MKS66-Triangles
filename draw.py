@@ -88,7 +88,9 @@ def generate_sphere( cx, cy, cz, r, step ):
     	z = cz
     	add_point(semicircle,x,y,z)
     sphere=new_matrix(4,0)
-    rot = make_rotX(2*math.pi/n)
+    rot = make_translate(-cx,-cy,-cz)
+    matrix_mult(make_rotX(2*math.pi/n),rot)
+    matrix_mult(make_translate(cx,cy,cz), rot)
     for i in range(n):
     	sphere = sphere + copy.deepcopy(semicircle)
     	matrix_mult(rot,semicircle)
@@ -119,7 +121,9 @@ def generate_torus( cx, cy, cz, r0, r1, step ):
     	z = cz
     	add_point(circle,x,y,z)
     torus=new_matrix(4,0)
-    rot = make_rotY(2*math.pi/n)
+    rot = make_translate(-cx,-cy,-cz)
+    matrix_mult(make_rotY(2*math.pi/n),rot)
+    matrix_mult(make_translate(cx,cy,cz), rot)
     for i in range(n):
     	torus = torus + copy.deepcopy(circle)
     	matrix_mult(rot,circle)
@@ -127,19 +131,15 @@ def generate_torus( cx, cy, cz, r0, r1, step ):
 
 
 def add_circle( points, cx, cy, cz, r, step ):
-    x0 = r + cx
-    y0 = cy
-    i = 1
+    n=int(step)
+    for i in range(n):
+        add_edge(points, cx+r*math.cos(2*math.pi*i/n), cy+r*math.sin(2*math.pi*i/n), cz, cx+r*math.cos(2*math.pi*(i+1)/n), cy+r*math.sin(2*math.pi*(i+1)/n), cz)
 
-    while i <= step:
-        t = float(i)/step
-        x1 = r * math.cos(2*math.pi * t) + cx;
-        y1 = r * math.sin(2*math.pi * t) + cy;
-
-        add_edge(points, x0, y0, cz, x1, y1, cz)
-        x0 = x1
-        y0 = y1
-        t+= step
+def add_culled_circle( points, cx, cy, cz, r, step ):
+    n=int(step)
+    for i in range(n):
+        add_edge(points, cx+r*math.cos(2*math.pi*i/n), cy+r*math.sin(2*math.pi*i/n), cz, cx+r*math.cos(2*math.pi*(i+1)/n), cy+r*math.sin(2*math.pi*(i+1)/n), cz)
+        add_vector(points, r*math.cos(2*math.pi*i/n), r*math.sin(2*math.pi*i/n), 0)
 
 def add_curve( points, x0, y0, x1, y1, x2, y2, x3, y3, step, curve_type ):
 
@@ -174,12 +174,34 @@ def draw_lines( matrix, screen, color ):
                    screen, color)    
         point+= 2
         
+def draw_culled_circles( matrix, screen, color):
+    if len(matrix) < 3:
+        print 'Need at least 2 points to draw'
+        return
+
+    point = 0
+    while point < len(matrix) - 2:
+    	v = matrix[point+2][:]
+    	v = normalized(v[:3])
+    	if v[2]<0:
+	        point+= 3
+    		continue
+    	draw_line( int(matrix[point][0]),
+                   int(matrix[point][1]),
+                   int(matrix[point+1][0]),
+                   int(matrix[point+1][1]),
+                   screen, color)
+        point+= 3
+        
 def add_edge( matrix, x0, y0, z0, x1, y1, z1 ):
     add_point(matrix, x0, y0, z0)
     add_point(matrix, x1, y1, z1)
     
 def add_point( matrix, x, y, z=0 ):
     matrix.append( [x, y, z, 1] )
+
+def add_vector( matrix, x, y, z=0 ):
+    matrix.append( [x, y, z, 0] )
 
 def draw_line( x0, y0, x1, y1, screen, color ):
 

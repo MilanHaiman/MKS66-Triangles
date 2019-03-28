@@ -9,6 +9,27 @@ z0  z1  ... zn
 """
 import math
 
+def dist(x1,y1,z1,x2,y2,z2):
+	return ((x1-x2)**2+(y1-y2)**2+(z1-z2)**2)**0.5
+
+def crossC(x1,y1,z1,x2,y2,z2):
+	return [y1*z2-y2*z1,z1*x2-z2*x1,x1*y2-x2*y1]
+
+def cross(v1,v2):
+	return crossC(v1[0],v1[1],v1[2],v2[0],v2[1],v2[2])
+
+def normalized(v):
+	if len(v)!=3:
+		print("bad vector length")
+		return
+	else:
+		mag = dist(v[0],v[1],v[2],0,0,0)
+		if mag==0:
+			return v
+		else:
+			return [w/mag for w in v]
+
+
 def make_bezier():
     return [
         [-1, 3, -3, 1],
@@ -52,6 +73,9 @@ def make_scale( x, y, z ):
     t[1][1] = y
     t[2][2] = z
     return t
+
+def make_dilate( r ):
+    return make_scale(r,r,r)
 
 def make_rotX( theta ):
     t = new_matrix()
